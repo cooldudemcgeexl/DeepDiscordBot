@@ -339,9 +339,3 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
-
-#User-specific Bot Files
-DeepDiscordBot/.env
-DeepDiscordBot/log.txt
-DeepDiscordBot/outputtext.csv
-DeepDiscordBot/BotEnv
