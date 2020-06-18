@@ -341,6 +341,7 @@ ASALocalRun/
 healthchecksdb
 
 #User-specific Bot Files
-.env
-log.txt
-outputtext.txt
+DeepDiscordBot/.env
+DeepDiscordBot/log.txt
+DeepDiscordBot/outputtext.csv
+DeepDiscordBot/BotEnv
