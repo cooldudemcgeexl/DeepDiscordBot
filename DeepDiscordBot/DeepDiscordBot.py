@@ -16,8 +16,21 @@ if TOKEN is None:
 
 bot = commands.Bot(command_prefix='!')
 
-# Initializing chance of message to 3%
+# Initializing chance of message to 3%, interjections to true
 msgChanceUbound = 33
+interjectionsEnabled = True
+
+@bot.command(name = 'interject', help = 'Enables/Disables random interjections', pass_context = True)
+async def toggleInterjections(ctx):
+    global interjectionsEnabled
+    interjectionsEnabled = not interjectionsEnabled
+    if interjectionsEnabled:
+        statusMsg = "Interjections enabled."
+    else:
+        statusMsg = "Interjections disabled."
+    await ctx.send(statusMsg)
+    return
+
 
 @bot.command(name='change_freq', help = "Changes the frequency of this bot's messages", pass_context=True)
 async def changeFrequency(ctx, newFreq):
@@ -60,8 +73,9 @@ async def on_message(message):
 
     # Random chance between 1 and ubound to send a message.
     # This causes bot to randomly interject when messages are sent.
+    global interjectionsEnabled
     msgChance = random.randint(1,msgChanceUbound)
-    if msgChance == 1:
+    if (msgChance == 1) and interjectionsEnabled:
         await message.channel.send(pull_rand_csv())
 
 
