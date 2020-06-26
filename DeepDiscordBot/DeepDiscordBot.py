@@ -2,6 +2,7 @@
 # bot.py
 import os
 import random
+import asyncio
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -13,12 +14,38 @@ if TOKEN is None:
     print("No token found. Please check that the API token has been inserted into .env")
     exit(0)
 
+# Loads file paths from .env
+inputText = os.getenv('QUOTE_INPUT')
+if inputText is None:
+    print("No input file found, please set up .env file")
+    exit(0)
 
-bot = commands.Bot(command_prefix='!')
+outputfile = os.getenv('OUTPUT_FILE')
+if outputfile is None:
+    outputfile = "log.txt"
 
-# Initializing chance of message to 3%, interjections to true
-msgChanceUbound = 33
-interjectionsEnabled = True
+cmdPrefix = os.getenv('COMMAND_PREFIX')
+if cmdPrefix is None:
+    cmdPrefix = '!'
+
+bot = commands.Bot(command_prefix=cmdPrefix)
+
+
+# Initializing chance of message, interjections, and repeats based on values in .env
+msgChanceUbound = int(os.getenv('DEFAULT_MESSAGE_UBOUND'))
+interjectionsEnabled = bool(os.getenv('INTERJECT'))
+repeatsEnabled = bool(os.getenv('REPEATS'))
+
+@bot.command(name='repeat', help='Toggles repeating messages', pass_context = True)
+async def toggleRepeats(ctx):
+    global repeatsEnabled
+    repeatsEnabled = not repeatsEnabled
+    if repeatsEnabled:
+        statusMsg = "Repeats enabled."
+    else:
+        statusMsg = "Repeats disabled."
+    await ctx.send(statusMsg)
+    return
 
 @bot.command(name = 'interject', help = 'Enables/Disables random interjections', pass_context = True)
 async def toggleInterjections(ctx):
@@ -42,17 +69,15 @@ async def changeFrequency(ctx, newFreq):
     return
 
 @bot.command(name='reload_knowledge', help = "Refreshes the bot's knowledge base")
-async def reload_CSV(ctx):
+async def refresh_Quotes(ctx):
     # Refreshes quote list. Useful if changing csv file without restarting bot. 
-    global allquotes
-    quotefile = open(file, "r", encoding = 'utf-8')
-    allquotes = quotefile.readlines()
-    quotefile.close()
+    reload_CSV()
     await ctx.send("Knowledge updated.")
 
 @bot.event
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
+    bot.loop.create_task(random_send())
 
 @bot.event
 async def on_message(message):
@@ -60,7 +85,7 @@ async def on_message(message):
     if message.author == bot.user:
         statusString = "[" + str(message.created_at) + "] Message sent in channel (" + message.channel.name + ") on server (" + message.channel.guild.name + "): " + message.content + "\n"
         print(statusString)
-        log_object = open('log.txt','a',encoding = 'utf-8')
+        log_object = open(outputfile,'a',encoding = 'utf-8')
         log_object.write(statusString)
         log_object.close()
         return
@@ -81,32 +106,46 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
+# Sends a random message after waiting 
+async def random_send():
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        # Pulls random channel from random guild
+        randServer = random.choice(bot.guilds)
+        randChannel = random.choice(randServer.text_channels)
+        await asyncio.sleep(random.randint(1,20)*1000) # Between 1000 and 20000 seconds
+        await randChannel.send(pull_rand_csv())
+
 
 def pull_rand_csv():
+    
+    if len(allquotes) == 0:
+        reload_CSV()
     # Reads a random line from the quote list and returns the message to be sent
-    randline = random.randint(0,numrows)
-    msgtext = allquotes[randline]
-
+    randline = random.randint(0,len(allquotes)-1)
+    global repeatsEnabled
+    # Pops from quotes array to prevent repeats
+    if repeatsEnabled:
+        msgtext = allquotes[randline]
+    else:
+        msgtext = allquotes.pop(randline)
     # Removing quotes, comma, and newline. These will always occupy the same positions in the string.
     msgtext = msgtext[1:-3]
     return msgtext
 
-def file_len(fname):
-    with open(fname, encoding='utf-8') as f:
-        for i, l in enumerate(f):
-            pass
-    f.close()
-    return i + 1
+# Reloads quote list from file
+def reload_CSV():
+    global allquotes
+    quotefile = open(inputText, "r", encoding = 'utf-8')
+    allquotes = quotefile.readlines()
+    quotefile.close()
 
 
-# Initializing values for bot, this will be moved into proper structure later
-
-file = "outputtext.csv"
-numrows = file_len(file)
-quotefile = open(file, "r", encoding = 'utf-8')
+quotefile = open(inputText, "r", encoding = 'utf-8')
 allquotes = quotefile.readlines()
 quotefile.close()
 random.seed()
+
 
 
 bot.run(TOKEN)
