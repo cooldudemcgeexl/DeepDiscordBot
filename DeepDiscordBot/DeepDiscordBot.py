@@ -35,6 +35,18 @@ bot = commands.Bot(command_prefix=cmdPrefix)
 msgChanceUbound = int(os.getenv('DEFAULT_MESSAGE_UBOUND'))
 interjectionsEnabled = bool(os.getenv('INTERJECT'))
 repeatsEnabled = bool(os.getenv('REPEATS'))
+ttsEnabled = bool(os.getenv("TTS"))
+
+@bot.command(name='tts', help = 'Toggles text-to-speech', pass_context = True)
+async def toggleTTS(ctx):
+    global ttsEnabled
+    ttsEnabled = not ttsEnabled
+    if ttsEnabled:
+        statusMsg = "TTS enabled."
+    else:
+        statusMsg = "TTS disabled."
+    await ctx.send(statusMsg)
+    return
 
 @bot.command(name='repeat', help='Toggles repeating messages', pass_context = True)
 async def toggleRepeats(ctx):
@@ -92,7 +104,7 @@ async def on_message(message):
 
     # Bot will pull a random message if mentioned.
     if bot.user.mentioned_in(message) and message.mention_everyone is False:
-        await message.channel.send(pull_rand_csv())
+        await message.channel.send(pull_rand_csv(),tts=ttsEnabled)
         return
 
 
@@ -101,7 +113,7 @@ async def on_message(message):
     global interjectionsEnabled
     msgChance = random.randint(1,msgChanceUbound)
     if (msgChance == 1) and interjectionsEnabled:
-        await message.channel.send(pull_rand_csv())
+        await message.channel.send(pull_rand_csv(),tts=ttsEnabled)
 
 
     await bot.process_commands(message)
@@ -114,7 +126,7 @@ async def random_send():
         randServer = random.choice(bot.guilds)
         randChannel = random.choice(randServer.text_channels)
         await asyncio.sleep(random.randint(1,20)*1000) # Between 1000 and 20000 seconds
-        await randChannel.send(pull_rand_csv())
+        await randChannel.send(pull_rand_csv(),tts=ttsEnabled)
 
 
 def pull_rand_csv():
