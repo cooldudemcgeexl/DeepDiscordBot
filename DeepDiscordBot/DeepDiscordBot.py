@@ -4,6 +4,7 @@ import os
 import random
 import asyncio
 import discord
+from datetime import datetime
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -126,7 +127,11 @@ async def random_send():
         randServer = random.choice(bot.guilds)
         randChannel = random.choice(randServer.text_channels)
         await asyncio.sleep(random.randint(1,20)*1000) # Between 1000 and 20000 seconds
-        await randChannel.send(pull_rand_csv(),tts=ttsEnabled)
+        try:
+            await randChannel.send(pull_rand_csv(),tts=ttsEnabled)
+        except:
+            
+            print("[" + str(datetime.now()) + "] Channel access denied in channel (" + randChannel.name + ")")
 
 
 def pull_rand_csv():
