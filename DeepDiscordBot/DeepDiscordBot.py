@@ -124,11 +124,13 @@ async def random_send():
     await bot.wait_until_ready()
     while not bot.is_closed():
         # Pulls random channel from random guild
+        global interjectionsEnabled
         randServer = random.choice(bot.guilds)
         randChannel = random.choice(randServer.text_channels)
-        await asyncio.sleep(random.randint(1,20)*1000) # Between 1000 and 20000 seconds
+        await asyncio.sleep(random.randint(1,20)*10000) # Between 10000 and 200000 seconds
         try:
-            await randChannel.send(pull_rand_csv(),tts=ttsEnabled)
+            if interjectionsEnabled:
+                await randChannel.send(pull_rand_csv(),tts=ttsEnabled)
         except:
             
             print("[" + str(datetime.now()) + "] Channel access denied in channel (" + randChannel.name + ")")
