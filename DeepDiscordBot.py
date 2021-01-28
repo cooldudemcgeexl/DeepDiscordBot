@@ -4,7 +4,7 @@ import os
 import random
 import asyncio
 import discord
-from datetime import datetime
+from datetime import datetime, time
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -91,6 +91,7 @@ async def refresh_Quotes(ctx):
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
     bot.loop.create_task(random_send())
+    bot.loop.create_task(daily_send())
 
 @bot.event
 async def on_message(message):
@@ -135,6 +136,20 @@ async def random_send():
             
             print("[" + str(datetime.now()) + "] Channel access denied in channel (" + randChannel.name + ")")
 
+async def daily_send():
+     await bot.wait_until_ready()
+     while not bot.is_closed():
+        randServer = random.choice(bot.guilds)
+        randChannel = random.choice(randServer.text_channels)
+        now = datetime.now()
+        try:
+            if now.hour == 9:
+                await randChannel.send(pull_rand_csv(),tts=ttsEnabled)
+
+            await asyncio.sleep(3600)
+        except:
+            
+            print("[" + str(datetime.now()) + "] Channel access denied in channel (" + randChannel.name + ")")
 
 def pull_rand_csv():
     
