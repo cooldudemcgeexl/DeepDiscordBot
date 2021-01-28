@@ -4,9 +4,17 @@ import os
 import random
 import asyncio
 import discord
+import logging
 from datetime import datetime, time
 from discord.ext import commands
 from dotenv import load_dotenv
+
+# Set up logger
+logging.basicConfig(
+    handlers=[logging.FileHandler('botlog.log', 'a', 'utf-8')],
+    level=logging.INFO, 
+    format='%(asctime)s [%(levelname)s] - %(message)s')
+logger = logging.getLogger()
 
 # Loads user token for bot from .env file
 load_dotenv()
@@ -77,7 +85,7 @@ async def changeFrequency(ctx, newFreq):
     # Allows users to adjust frequency of messages sent by the bot
     global msgChanceUbound
     msgChanceUbound = int((1/int(newFreq))*100)
-    print(f"Message chance changed to: {newFreq} %\n")
+    logger.info(f"Message chance changed to: {newFreq} %\n")
     await ctx.send(f"Chance of a message is now {newFreq}%")
     return
 
@@ -89,19 +97,15 @@ async def refresh_Quotes(ctx):
 
 @bot.event
 async def on_ready():
-    print(f'{bot.user} has connected to Discord!')
+    logger.info(f'{bot.user} has connected to Discord!')
     bot.loop.create_task(random_send())
     bot.loop.create_task(daily_send())
 
 @bot.event
 async def on_message(message):
-    # Writes to console/text file time, date, location, and contents of message sent by bot
+    # Writes to log file location and contents of message sent by bot
     if message.author == bot.user:
-        statusString = "[" + str(message.created_at) + "] Message sent in channel (" + message.channel.name + ") on server (" + message.channel.guild.name + "): " + message.content + "\n"
-        print(statusString)
-        log_object = open(outputfile,'a',encoding = 'utf-8')
-        log_object.write(statusString)
-        log_object.close()
+        logger.info(f"Message sent in channel ({message.channel.name}) on server ({message.channel.guild.name}): {message.content}\n") 
         return
 
     # Bot will pull a random message if mentioned.
@@ -133,8 +137,8 @@ async def random_send():
             if interjectionsEnabled:
                 await randChannel.send(pull_rand_csv(),tts=ttsEnabled)
         except:
+            logger.error(f"Channel access denied in channel ({randChannel.name})")
             
-            print("[" + str(datetime.now()) + "] Channel access denied in channel (" + randChannel.name + ")")
 
 async def daily_send():
      await bot.wait_until_ready()
@@ -148,8 +152,7 @@ async def daily_send():
 
             await asyncio.sleep(3600)
         except:
-            
-            print("[" + str(datetime.now()) + "] Channel access denied in channel (" + randChannel.name + ")")
+            logger.error(f"Channel access denied in channel ({randChannel.name})")
 
 def pull_rand_csv():
     
