@@ -3,11 +3,9 @@
 import os
 import random
 import asyncio
-import discord
 import logging
 from datetime import datetime, time
 from discord.ext import commands
-from dotenv import load_dotenv
 
 # Set up logger
 logging.basicConfig(
@@ -17,7 +15,6 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 # Loads user token for bot from .env file
-load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 if TOKEN is None:
     print("No token found. Please check that the API token has been inserted into .env")
